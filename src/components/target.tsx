@@ -6,7 +6,7 @@ type TargetProps = {
   targetIdx: number;
 };
 
-export default function Target({ targetIdx }: TargetProps) {
+export default function Target({ }: TargetProps) {
   const { targets } = useGlobalContext();
   const { scene } = useGLTF("/target.glb");
 
