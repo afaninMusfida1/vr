@@ -3,6 +3,7 @@ import {
   PropsWithChildren,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -12,12 +13,14 @@ import { BulletData } from "../types";
 
 export interface IGlobalContext {
   score: number;
-  level: number; // <-- Tambahan state level
+  level: number;
+  isVictory: boolean;
   bullets: BulletData[];
   targets: React.MutableRefObject<Set<Object3D>>;
   addScore: () => void;
   addBullet: (position: Vector3, quaternion: Quaternion) => void;
   removeBullet: (id: BulletData["id"]) => void;
+  startGameAtLevel: (selectedLevel: number) => void;
 }
 
 export const bulletSpeed = 10;
@@ -28,7 +31,8 @@ const GlobalContext = createContext<IGlobalContext | undefined>(undefined);
 export const GlobalProvider = ({ children }: PropsWithChildren) => {
   const [bullets, setBullets] = useState<BulletData[]>([]);
   const [score, setScore] = useState(0);
-  const [level, setLevel] = useState(1); // <-- Default level 1
+  const [level, setLevel] = useState(1);
+  const [isVictory, setIsVictory] = useState(false);
   const targets = useRef<Set<Object3D>>(new Set());
 
   const removeBullet = useCallback(
@@ -55,20 +59,42 @@ export const GlobalProvider = ({ children }: PropsWithChildren) => {
     [removeBullet]
   );
 
+  // addScore sekarang HANYA mengurus penambahan skor saja
   const addScore = useCallback(() => {
-    setScore((prevScore) => {
-      const newScore = prevScore + 10;
-      // Logika Naik Level: Setiap kelipatan 50 poin, naik 1 level
-      if (newScore % 50 === 0) {
-        setLevel((prevLevel) => prevLevel + 1);
-      }
-      return newScore;
-    });
+    setScore((prevScore) => prevScore + 10);
+  }, []);
+
+  // Gunakan useEffect untuk memantau perubahan skor dan mengatur Level & Victory
+  useEffect(() => {
+    // Rumus: Skor 0-40 = Lvl 1, 50-90 = Lvl 2, 100-140 = Lvl 3, dst. Maksimal Lvl 5.
+    const calculatedLevel = Math.min(Math.floor(score / 50) + 1, 5);
+    setLevel(calculatedLevel);
+
+    if (score >= 250) {
+      setIsVictory(true);
+    }
+  }, [score]);
+
+  const startGameAtLevel = useCallback((selectedLevel: number) => {
+    // Cukup atur skornya, useEffect di atas akan otomatis menyesuaikan levelnya
+    setScore((selectedLevel - 1) * 50);
+    setBullets([]);
+    setIsVictory(false);
   }, []);
 
   const value = useMemo(
-    () => ({ bullets, targets, score, level, addBullet, removeBullet, addScore }),
-    [bullets, targets, score, level, addBullet, removeBullet, addScore]
+    () => ({
+      bullets,
+      targets,
+      score,
+      level,
+      isVictory,
+      addBullet,
+      removeBullet,
+      addScore,
+      startGameAtLevel,
+    }),
+    [bullets, targets, score, level, isVictory, addBullet, removeBullet, addScore, startGameAtLevel]
   );
 
   return (

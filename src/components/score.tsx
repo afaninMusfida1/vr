@@ -8,7 +8,7 @@ function formatScoreText(score: number) {
 }
 
 export default function Score() {
-  const { score, level } = useGlobalContext(); // <-- Ambil level dari context
+  const { score, level, isVictory } = useGlobalContext(); 
   const soundRef = useRef<PAudio>(null);
 
   useEffect(() => {
@@ -24,23 +24,23 @@ export default function Score() {
 
   return (
     <group position={finalPosition} rotation={finalRotation}>
-      {/* Papan hitam diperlebar & dipertinggi sedikit untuk 2 baris teks */}
       <mesh position={[0, 0, -0.05]}>
         <planeGeometry args={[2.2, 1.8]} /> 
         <meshBasicMaterial color="black" />
       </mesh>
 
-      {/* Teks Level & Skor */}
       <Text
         color={0xffa276}
         font="/SpaceMono-Bold.ttf"
-        fontSize={0.4} // <-- Ukuran font dikecilkan sedikit agar muat
+        fontSize={0.4}
         anchorX={"center"}
         anchorY={"middle"}
         textAlign={"center"}
-        lineHeight={1.2} // <-- Jarak antar baris
+        lineHeight={1.2}
       >
-        {`LVL ${level}\n${formatScoreText(score)}`}
+        {/* Render teks berbeda jika sudah menang */}
+        {isVictory ? `VICTORY!\nCLEARED` : `LVL ${level}\n${formatScoreText(score)}`}
+        
         <PositionalAudio ref={soundRef} url="/score.ogg" loop={false} />
       </Text>
     </group>
